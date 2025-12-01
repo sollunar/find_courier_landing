@@ -2,7 +2,9 @@ version: "3.8"
 
 services:
         nginx-site:
-                image: shamad/findcourier_landing:latest
+                build:
+                        context: .
+                        dockerfile: Dockerfile
                 restart: always
                 container_name: findcourier-site
                 network_mode: host
