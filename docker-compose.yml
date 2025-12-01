@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+        nginx-site:
+                image: shamad/findcourier_landing:latest
+                restart: always
+                container_name: findcourier-site
+                network_mode: host
+                volumes:
+                        - /var/lib/findcourier:/var/lib/findcourier
