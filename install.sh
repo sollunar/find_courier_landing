@@ -13,7 +13,7 @@ echo "  findcourier.key"
 
 # Launch Docker Compose with build
 echo "Building and starting the container..."
-docker-compose up -d --build
+docker compose up -d --build
 
 # Show running containers
 docker ps
