@@ -2,9 +2,7 @@ version: "3.8"
 
 services:
         nginx-site:
-                build:
-                        context: .
-                        dockerfile: Dockerfile
+                image: ${FINDCOURIER_IMAGE:?Set FINDCOURIER_IMAGE to a registry image reference}
                 restart: always
                 container_name: findcourier-site
                 network_mode: host
