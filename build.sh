@@ -1,10 +1,8 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 IMAGE_NAME="shamad/find-courier-site:latest"
+PLATFORM="${PLATFORM:-linux/amd64}"
 
-echo "Building image: $IMAGE_NAME"
-docker build -t "$IMAGE_NAME" .
-
-echo "Pushing image: $IMAGE_NAME"
-docker push "$IMAGE_NAME"
+echo "Building and pushing $IMAGE_NAME for $PLATFORM"
+docker buildx build --platform "$PLATFORM" -t "$IMAGE_NAME" --push .
