@@ -41,13 +41,13 @@ Prerequisites:
 - Docker with Docker Compose v2 (already installed on a Remnawave Node)
 - an IPv4 `A` record pointing the camouflage domain directly to the node
 - Cloudflare proxying disabled for that record, when Cloudflare DNS is used
-- public `80/tcp` available; local port `11120` must not be exposed
+- public `80/tcp` available; local port `9443` must not be exposed
 
 Run on each node with that node's own hostname:
 
 ```bash
 ./install-caddy.sh \
-  --domain nl1.find-courier.com \
+  --domain nl.find-courier.com \
   --email admin@find-courier.com \
   --open-firewall
 ```

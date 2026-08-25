@@ -8,7 +8,7 @@ readonly CONTAINER_NAME="findcourier-caddy"
 
 DOMAIN=""
 ACME_EMAIL=""
-SELF_STEAL_PORT="11120"
+SELF_STEAL_PORT="9443"
 OPEN_FIREWALL="false"
 
 log() {
@@ -34,18 +34,18 @@ Required:
   --email EMAIL         ACME account email used by Caddy
 
 Options:
-  --port PORT           Local Caddy HTTPS port (default: 11120)
+  --port PORT           Local Caddy HTTPS port (default: 9443)
   --open-firewall       Allow 80/tcp through UFW when UFW is active
   -h, --help            Show this help
 
 Example:
   ./install-caddy.sh \
-    --domain nl1.find-courier.com \
+    --domain nl.find-courier.com \
     --email admin@find-courier.com \
     --open-firewall
 
 The script builds the React application into a Caddy image, starts Caddy on
-127.0.0.1:11120, exposes only HTTP port 80 for ACME, waits for a valid public
+127.0.0.1:9443, exposes only HTTP port 80 for ACME, waits for a valid public
 certificate, and prints the matching Remnawave REALITY settings.
 USAGE
 }
@@ -252,4 +252,3 @@ After activating the inbound, verify from another machine:
 
 The local target port ${SELF_STEAL_PORT} must remain closed to the internet.
 EOF
-
