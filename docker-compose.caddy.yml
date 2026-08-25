@@ -1,0 +1,33 @@
+name: find-courier-camouflage
+
+services:
+  caddy-site:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    image: find-courier-caddy:local
+    container_name: findcourier-caddy
+    restart: unless-stopped
+    network_mode: host
+    env_file:
+      - ${CADDY_ENV_FILE:-.env.caddy}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    stop_grace_period: 10s
+
+volumes:
+  caddy_data:
+  caddy_config:
+

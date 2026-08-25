@@ -1,0 +1,35 @@
+{
+	email {$ACME_EMAIL}
+
+	# Xray owns the public TLS port. Caddy terminates only the local
+	# REALITY target connection forwarded by Xray.
+	https_port {$SELF_STEAL_PORT}
+	default_bind 127.0.0.1
+	auto_https disable_redirects
+
+	# REALITY over RAW is TCP-only. Do not advertise an unreachable
+	# HTTP/3 endpoint on the internal HTTPS port.
+	servers 127.0.0.1:{$SELF_STEAL_PORT} {
+		protocols h1 h2
+	}
+}
+
+# Keep port 80 public so Caddy can issue and renew the certificate by
+# using the ACME HTTP-01 challenge. Xray continues to own public port 443.
+http://{$SELF_STEAL_DOMAIN} {
+	bind 0.0.0.0 [::]
+	redir https://{$SELF_STEAL_DOMAIN}{uri} 308
+}
+
+https://{$SELF_STEAL_DOMAIN} {
+	root * /srv/find-courier
+
+	encode zstd gzip
+	try_files {path} {path}/ /index.html
+	file_server
+
+	log {
+		output stdout
+		format json
+	}
+}
