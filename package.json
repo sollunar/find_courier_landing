@@ -37,6 +37,7 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "check:infra": "bash -n install-caddy.sh && docker compose --env-file .env.caddy.example -f docker-compose.caddy.yml config --quiet",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

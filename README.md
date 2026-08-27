@@ -1,82 +1,88 @@
-# Getting Started with Create React App
+# Find Courier landing
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Public React landing page for Find Courier, plus a small Caddy deployment used
+as the local HTTPS target for Remnawave/Xray REALITY. Certificate lifecycle and
+infrastructure inventory deliberately live outside this repository.
 
-## Available Scripts
+## Frontend
 
-In the project directory, you can run:
+```bash
+npm ci --legacy-peer-deps
+npm start
+npm run build
+```
 
-### `npm start`
+The Caddy deployment does not change the visual design of the React app.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Camouflage deployment
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+Xray owns public `443/tcp`. Caddy serves the landing page only on
+`127.0.0.1:9443`, and Xray forwards ordinary TLS traffic to that local target.
+Neither port `80` nor port `9443` needs to be public.
 
-### `npm test`
+Prerequisites on a node:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- Linux with root access;
+- Docker and Docker Compose v2;
+- `bash`, `curl`, and `openssl`;
+- a valid certificate already provisioned outside this repository as
+  `fullchain.pem` and `privkey.pem` in a root-owned directory.
 
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-## Caddy camouflage deployment for Remnawave
-
-The Caddy deployment builds the same React application without changing its
-design. Caddy serves HTTPS only on the local REALITY target port, while Xray
-owns public port `443`. Public port `80` remains available to Caddy for ACME
-HTTP-01 certificate issuance and renewal.
-
-Prerequisites:
-
-- Docker with Docker Compose v2 (already installed on a Remnawave Node)
-- an IPv4 `A` record pointing the camouflage domain directly to the node
-- Cloudflare proxying disabled for that record, when Cloudflare DNS is used
-- public `80/tcp` available; local port `9443` must not be exposed
-
-Run on each node with that node's own hostname:
+Deploy or update the site with:
 
 ```bash
 ./install-caddy.sh \
   --domain nl.find-courier.com \
-  --email admin@find-courier.com \
-  --open-firewall
+  --client-host nl.whopn.org \
+  --port 9443 \
+  --cert-dir /opt/find-courier-camouflage/certs/nl.find-courier.com
 ```
 
-The installer validates DNS and occupied ports, creates the untracked
-`.env.caddy`, builds `Dockerfile.caddy`, starts
-`docker-compose.caddy.yml`, waits for a valid certificate, and prints the
-matching Remnawave REALITY settings.
+Before starting Caddy, the installer checks that:
 
-Useful lifecycle commands:
+- the certificate and private key are valid PEM files and match each other;
+- the certificate SAN covers `--domain` and is valid for at least 24 hours;
+- the domain and optional client host resolve to this node;
+- the target port is not occupied by another process.
+
+It then mounts the certificate directory read-only into Caddy, verifies the
+Compose configuration, builds the frontend image, starts the service, and
+checks the loopback HTTPS endpoint. It never requests or renews certificates
+and does not accept DNS-provider credentials.
+
+Useful commands on a node:
 
 ```bash
-CADDY_ENV_FILE=.env.caddy docker compose -f docker-compose.caddy.yml ps
-CADDY_ENV_FILE=.env.caddy docker compose -f docker-compose.caddy.yml logs -f
-CADDY_ENV_FILE=.env.caddy docker compose -f docker-compose.caddy.yml up -d --build
+docker compose --env-file .env.caddy -f docker-compose.caddy.yml ps
+docker compose --env-file .env.caddy -f docker-compose.caddy.yml logs -f
+docker compose --env-file .env.caddy -f docker-compose.caddy.yml up -d --build
 ```
 
-### `npm run eject`
+## Remnawave/Xray values
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+For the example above, the relevant inbound fragment is:
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```json
+{
+  "listen": "0.0.0.0",
+  "port": 443,
+  "protocol": "vless",
+  "streamSettings": {
+    "network": "raw",
+    "security": "reality",
+    "realitySettings": {
+      "target": "127.0.0.1:9443",
+      "xver": 0,
+      "serverNames": ["nl.find-courier.com"],
+      "privateKey": "SHARED_ZONE_REALITY_PRIVATE_KEY",
+      "shortIds": ["SHARED_ZONE_SHORT_ID"]
+    }
+  }
+}
+```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+A DNS-balanced client connection can use `nl.whopn.org:443` with SNI
+`nl.find-courier.com`. Every node behind that connection must use the same
+REALITY key pair, short ID, SNI, inbound port, and local target. DNS round-robin
+does not remove unhealthy nodes; health monitoring and DNS changes are separate
+operational responsibilities.
