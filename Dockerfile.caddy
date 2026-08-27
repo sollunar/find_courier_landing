@@ -10,5 +10,12 @@ RUN npm run build
 
 FROM caddy:2.11.3-alpine
 
+# The upstream binary carries cap_net_bind_service so it can bind ports 80/443.
+# This deployment binds only loopback:9443 and drops every runtime capability.
+# Copying the file creates a binary without the file-capability xattr; otherwise
+# Linux rejects execve when Docker's capability bounding set is empty.
+RUN cp /usr/bin/caddy /usr/local/bin/caddy && chmod 0755 /usr/local/bin/caddy
+
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /app/build /srv/find-courier
+ENTRYPOINT ["/usr/local/bin/caddy"]
