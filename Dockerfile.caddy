@@ -18,4 +18,4 @@ RUN cp /usr/bin/caddy /usr/local/bin/caddy && chmod 0755 /usr/local/bin/caddy
 
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /app/build /srv/find-courier
-ENTRYPOINT ["/usr/local/bin/caddy"]
+CMD ["/usr/local/bin/caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
